@@ -2,8 +2,6 @@
 
 Node adons是有C++编写的动态链接库，是对Node能力的扩展。通过“特定”的方式实现功能，然后编译成.node文件，Node的require()方法可以直接加载.node文件到代码中使用。目前有三种方式可以实现addons，分别是：**使用N-API**、**nan**、**直接使用底层的库（v8、libuv、node相关的库）**，下面简单说下三种方式。
 
-
-
 ## 直接使用底层的库实现addons
 
 Node底层是有C/C++实现的，基本的能力有v8、libuv提供，而v8和libuv也是C/C++的库，所以我们是可以直接使用v8、libuv提供的能力来实现addons，但是这就需要你掌握C/C++的知识，同时对v8、libuv、node的内部库已经其他Node使用到的库都比较熟悉，这样才能开发一个Node的addon。可以看到，这种开发方式对人的要求很高，具有一定的入门门槛，这种方式类似于直接写Node的源码了。
@@ -162,6 +160,26 @@ NAPI_MODULE(hello, Init)
 
 使用N-API的方式进行开发，我们只需要关注N-API的使用，不用关注JS底层的逻辑和数据类型，降低了编写addons的难度，同时提供了跨版本运行的支持，不用再为跨版本运行的事情苦恼了。
 
+也提供了C++版本的N-API，[node-addon-api](https://github.com/nodejs/node-addon-api.git) ,使用更加的简洁，hello改造如下：
+
+```c++
+#include <napi.h>
+
+Napi::String Say(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    return Napi::String::New(env, "hell world");
+}
+
+
+Napi::Object Init(Napi::Env env, Napi::Object exports) {
+    exports.Set(Napi::String::New(env, "say"), Napi::Function::New(env, Say));
+    return exports;
+}
+
+NODE_API_MODULE(hello, Init)
+
+```
+
 ## 总结
 
 从native到nan，再到N-API，我们看到了Node addons编写的技术演变路径。初期的时候，Node处于快速迭代的时期，包括底层的变动都是比较多的，导致开发的addons稳定性成为最大的问题，addons无法在不同的Node版本上运行，需要修改源码、重新编译后才能在新版本上正常使用。为了解决这个问题，提出了nan(Native Abstractions for Node.js)的解决方法，nan对底层的方法进行了抽象，保证了开发的addons相对稳定，与之前开发的addons相比，稳定性有了进一步的提升（在major版本之间运行是不会有问题，毕竟major版本更新相关还是比较慢的）。
@@ -172,6 +190,6 @@ NAPI_MODULE(hello, Init)
 
 ### 参考文档
 
-1. http://localhost:8080/en/docs/guides/abi-stability/
+1. https://nodejs.org/en/docs/guides/abi-stability/
 2. https://nodejs.org/docs/latest-v12.x/api/n-api.html
 3. https://cnodejs.org/topic/5957626dacfce9295ba072e0
